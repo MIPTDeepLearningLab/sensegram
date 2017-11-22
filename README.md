@@ -128,6 +128,12 @@ The vectors are of size 100, trained with CBOW model using 3-words context windo
 
 ## Training a new model from a text corpus
 
+To run a demo of training mode run:
+
+```
+make train
+```
+
 The best way to train your own sense model is with the `train.py` script. You will have to provide a tokenized corpus as input. For tokenization you can use the [preprocessing](corpora/preprocessing.py) script (it uses Treebank tokenizer and keeps letter cases, numbers and punctuation intact). If you run `train.py` with no parameters, it will print usage information:
 
 ```
