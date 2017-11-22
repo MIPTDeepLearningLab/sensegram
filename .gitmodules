@@ -1,3 +1,6 @@
 [submodule "word2vec"]
 	path = word2vec
 	url = git@github.com:dav/word2vec
+[submodule "chinese-whispers"]
+	path = chinese-whispers
+	url = https://github.com/uhh-lt/chinese-whispers
