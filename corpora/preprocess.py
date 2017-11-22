@@ -6,7 +6,6 @@
 import gzip, codecs, argparse
 from nltk.tokenize import word_tokenize
 
-## Note: working with dt you'll have to check for : (or any garbage) in a word (in neighbours?)
 
 def run(corpus, output):
     if corpus.endswith(".gz"):  

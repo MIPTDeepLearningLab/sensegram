@@ -1,7 +1,4 @@
-__author__ = 'test'
-
 import sys
-import time
 import threading
 from itertools import izip, count
 

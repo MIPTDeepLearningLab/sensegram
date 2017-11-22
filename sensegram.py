@@ -1,21 +1,47 @@
-from operator import itemgetter
 import os.path
 import codecs
-import math
 import numpy as np
 from gensim.models import word2vec
+from collections import defaultdict
+from traceback import format_exc
+import gensim
 
 default_count = 100 # arbitrary, should be larger than min_count of vec object, which is 5 by default
+SEP_SENSE = "#"
+INVENTORY_EXT = ".inventory.csv"
 
 class SenseGram(word2vec.Word2Vec):
     def __init__(self, *args, **kwargs):
         super(SenseGram, self).__init__(*args, **kwargs)
-        self.probs = {} # mapping from a sense (String) to its probability
-    
+        self.inventory = defaultdict(lambda: defaultdict(float))
+
+    def max_pairwise_sim(self, word_i, word_j, ignore_case=False):
+        """ Calculates maximal pairwise similarity between all senses. """
+
+        senses_word_i = [s for s, p in self.get_senses(word_i, ignore_case=ignore_case)]
+        senses_word_j = [s for s, p in self.get_senses(word_j, ignore_case=ignore_case)]
+        sims_ij = []
+        for n, s_i in enumerate(senses_word_i):
+            for m, s_j in enumerate(senses_word_j):
+                sims_ij.append((self.similarity(s_i, s_j), s_i, s_j))
+
+        sims_ij = sorted(sims_ij, reverse=True)
+        if len(sims_ij) > 0:
+            max_sim_ij = sims_ij[0][0]
+            return max_sim_ij
+        else:
+            return 0.0
+
+    def create_zero_vectors(self, senses_num, vector_dim):
+        """ Resets existing word vectors and creates new vectors.
+         This is useful if you try to create a model from scratch. """
+
+        self.wv.syn0 = np.zeros((senses_num, vector_dim), dtype=np.float32)
+
     def get_senses(self, word, ignore_case=False):
-        """ returns a list of all available senses for a given word.
-        example: 'mouse' -> ['mouse#0', 'mouse#1', 'mouse#2']
-        Assumption: senses use continuous numbering"""
+        """ Returns a list of all available senses for a given word.
+        example: 'mouse' -> [('mouse#0', 0.33), ('mouse#1', 0.66)] """
+
         words = [word]
         senses = []
         if ignore_case:
@@ -24,178 +50,83 @@ class SenseGram(word2vec.Word2Vec):
         
         words = set(words)
         for word in words:
-            for i in range(0,200):
-                sense = word + u'#' + unicode(i)
-                if sense in self.vocab:
-                    senses.append((sense, self.probs[sense]))
-                else:
-                    break
+            if word not in self.inventory: continue
+            for sense_id in self.inventory[word]:
+                sense = word + SEP_SENSE + unicode(sense_id)
+                if sense not in self.wv.vocab: continue
+                senses.append((sense, self.inventory[word][sense_id]))
         return senses
     
     def save_word2vec_format(self, fname, fvocab=None, binary=False):
-        super(SenseGram, self).save_word2vec_format(fname, fvocab, binary)
-        
-        prob_file = fname + ".probs"
+        """ Saves SenseGram model in the word2vec format. In addition a CSV
+        file with word sense inventory is saved containing a priory probabilities."""
+
+        # Save the word2vec format model
+        self.wv.save_word2vec_format(fname, fvocab, binary)
+
+        # Save the extra file 'word#sense_id<TAB>prob-of-the-sense' with sense inventory info
+        prob_file = fname + INVENTORY_EXT
         with codecs.open(prob_file, 'w', encoding='utf-8') as out:
-            for sense, prob in self.probs.items():
-                out.write("%s %s\n" % (sense, prob))
+            for word in self.inventory:
+                for sense_id in self.inventory[word]:
+                    out.write("%s#%s\t%.6f\n" % (word, sense_id, self.inventory[word][sense_id]))
     
     @classmethod
-    def load_word2vec_format(cls, fname, fvocab=None, binary=False, norm_only=True, encoding='utf8', unicode_errors='strict'):
-        mod = word2vec.Word2Vec.load_word2vec_format(fname, fvocab, binary, encoding, unicode_errors)
-        
-        result = cls(size=mod.vector_size)
-        result.syn0 = mod.syn0
-        result.vocab = mod.vocab
-        result.index2word = mod.index2word
-        
-        prob_file = fname + ".probs"
-        if os.path.isfile(prob_file):
-            with codecs.open(prob_file, 'r', encoding='utf-8') as inp: 
-                for line in inp:
+    def load_word2vec_format(cls, model_fpath, fvocab=None, binary=False, norm_only=True, encoding='utf8', unicode_errors='strict'):
+        """ Load the model from word2vec format (the vectors) and optionally loads word sense inventory
+        from a CSV file located next to the word vectors. """
+
+        # Load word vectors
+        wv_obj = gensim.models.KeyedVectors.load_word2vec_format(model_fpath, fvocab, binary, encoding, unicode_errors)
+        result = cls(size=wv_obj.syn0.shape[1])
+        result.wv.syn0 = wv_obj.syn0
+        result.wv.vocab = wv_obj.vocab
+        result.wv.index2word = wv_obj.index2word
+
+        # Load the inventory
+        inventory_fpath = model_fpath + INVENTORY_EXT
+        if os.path.isfile(inventory_fpath):
+            with codecs.open(inventory_fpath, 'r', encoding='utf-8') as inventory_file:
+                for line in inventory_file:
                     try:
-                        sense, prob = line.split()
-                        result.probs[sense] = float(prob)
+                        sense, prob = line.split('\t')
+                        f = sense.split(SEP_SENSE)
+                        word = SEP_SENSE.join(f[0:len(f)-1])  # some words can contains sep
+                        sense_id = f[-1]
+                        if len(word) == 0 or len(sense_id) == 0: continue
+                        result.inventory[word][sense_id] = float(prob)
                     except:
-                        result.probs[sense] = 1
+                        print "Bad line '%s'" % line
+                        print format_exc()
         else:
-            for w in result.index2word:
-                result.probs[w] = 1.0
+            for sense in result.wv.index2word:
+                try:
+                    word, sense_id = sense.split(SEP_SENSE)
+                    result.inventory[word][sense_id] = 1.0
+                except:
+                    print format_exc()
                     
         return result
         
-    def add_word(self, word, vector):
-        """add new word to the model"""
-        if hasattr(self, 'syn0'):
-            word_id = len(self.vocab)
-            self.vocab[word] = word2vec.Vocab(index=word_id, count=default_count)
-            self.syn0[word_id] = vector
-            self.index2word.append(word)
+    def add_sense(self, word, sense_id, vector, prob):
+        """ Add a new sense to the model, where sense is an
+        identifier composed composed of a word and an integer sense id, e.g. 'python#2'.
+        The vector is a regular word2vec vector in the form of ndarray.
+        The prob is a priory probability of the word sense among all senses of the word,
+        e.g. "python#1" is 0.33 and "python#2" is 0.67. """
 
-            assert word == self.index2word[self.vocab[word].index]
+        # Update the word2vec model: vector and word2vec vocabulary
+        if hasattr(self.wv, 'syn0'):
+            word_id = len(self.wv.vocab)
+
+            sense = word.replace(" ","_") + SEP_SENSE + unicode(sense_id) # w2v format accepts no whitespaces
+            self.wv.vocab[sense] = word2vec.Vocab(index=word_id, count=default_count)
+            self.wv.syn0[word_id] = vector
+            self.wv.index2word.append(sense)
+            assert sense == self.wv.index2word[self.wv.vocab[sense].index]
         else: 
-            raise RuntimeError("must initialize syn0 matrix before adding words")
-        
-    def __normalize_probs__(self, cluster_sum):
-        for sense, cluster_size in self.probs.items():
-            if len(sense.split("#")) == 2:
-                word, sense_id = sense.split("#")
-                if word in cluster_sum and cluster_sum[word] > 0:
-                    self.probs[sense] = float(cluster_size)/cluster_sum[word]
-                else:
-                    self.probs[sense] = 1
+            raise RuntimeError("Error: you should initialize syn0 matrix before adding words")
 
-class WSD(object):
-    
-    def __init__(self, vs, vc, window=10, method="sim", filter_ctx=2, ignore_case=False, verbose=False):
-        self.vs = vs
-        self.vc = vc
-        self.window = window
-        self.ctx_method = method
-        self.filter_ctx = filter_ctx
-        self.ignore_case = ignore_case
-        self.verbose = verbose
-        
-        print("Disambiguation method: " + self.ctx_method)
-        print("Filter context: f = %s" % (self.filter_ctx))
-        
-    def get_context(self, text, start, end):
-        """ returns a list of words surrounding the target positioned at [start:end] in the text 
-        target_pos is a string 'start,end' 
-        window=5 means 5 words on the left + 5 words on the right are returned, if they exist"""
-        
-        l, r = text[:start].split(), text[end:].split()
-    
-        # it only makes sense to use context for which we have vectors
-        l = [ctx for ctx in l if ctx in self.vc.vocab]
-        r = [ctx for ctx in r if ctx in self.vc.vocab]
-            
-        return l[-self.window:] + r[:self.window]
-    
-    def __logprob__(self, cv, vsense):
-        """ returns P(vsense|cv), where vsense is a vector, cv is a context vector """
-        return 1.0 / (1.0 + np.exp(-np.dot(cv, vsense)))
-    
-    def __cosine_sim__(self, v1, v2):
-        "compute cosine similarity of v1 to v2: (v1 dot v2)/{||v1||*||v2||)"
-        sumxx, sumxy, sumyy = 0, 0, 0
-        for i in range(len(v1)):
-            x = v1[i]; y = v2[i]
-            sumxx += x*x
-            sumyy += y*y
-            sumxy += x*y
-        return sumxy/math.sqrt(sumxx*sumyy)
-    
-    def __filter__(self, vctx, senses, n):
-        """ returns n most relevant for WSD context vectors """
-        
-        if self.ctx_method == 'prob':
-            prob_dist_per_cv = [[self.__logprob__(cv, self.vs[sense]) for sense, prob in senses] for cv in vctx]
-        elif self.ctx_method == 'sim':
-            prob_dist_per_cv = [[self.__cosine_sim__(cv, self.vs[sense]) for sense, prob in senses] for cv in vctx]
-        else:
-            raise ValueError("Unknown context handling method '%s'" % self.ctx_method)
-            
-        significance = [abs(max(pd) - min(pd)) for pd in prob_dist_per_cv]
-        if self.verbose:
-            print "Significance scores of context words:"
-            print significance
-        most_significant_cv = sorted(zip(vctx, significance), key = itemgetter(1), reverse=True)[:n]
-        
-        return [cv for cv, sign in most_significant_cv]
-    
-    def __dis_context__(self, context, word):
-        """ disambiguates the sense of a word for a given list of context words
-            context - a list of context words
-            word  - word to be disambiguated
-            returns None if word is not covered by the model"""
-        senses = self.vs.get_senses(word, self.ignore_case)
-        if self.verbose:
-            print "Senses of a target word:"
-            print senses
-            
-        if len(senses) == 0: # means we don't know any sense for this word
-            return None 
-        
-        # collect context vectors
-        vctx = [self.vc[c] for c in context]
-       
-        if len(vctx) == 0: # means we have no context
-            return None
-        # TODO: better return most frequent sense or make random choice
-        
-        # filter context vectors, if aplicable
-        if self.filter_ctx >= 0:
-                vctx = self.__filter__(vctx, senses, self.filter_ctx)
-        
-        if self.ctx_method == 'prob':
-            avg_context = np.mean(vctx, axis=0)
-            scores = [self.__logprob__(avg_context, self.vs[sense]) for sense, prob in senses]
-            
-        elif self.ctx_method == 'sim':
-            avg_context = np.mean(vctx, axis=0)
-            scores = [self.__cosine_sim__(avg_context, self.vs[sense]) for sense, prob in senses]
-            if self.verbose:
-                print "Sense probabilities:"
-                print scores
-            
-        else:
-            raise ValueError("Unknown context handling method '%s'" % self.ctx_method) 
-        
-        # return sense (word#id), scores for senses
-        return senses[np.argmax(scores)][0], scores
-    
-    def dis_text(self, text, target, target_start, target_end):
-        """ disambiguates the sense of a word in given text
-            text - a tokenized string ("Obviously , cats are funny .")
-            target  - a target word (lemma) to be disambiguated ("cat")
-            target_start - start index of target word occurence in text (12)
-            target_end - end index of target word occurence in text, considering flexed forms (16)
-            
-            returns None if word is not covered by the model"""
-        
-        ctx = self.get_context(text, target_start, target_end)
-        if self.verbose:
-            print "Extracted context words:"
-            print ctx
-        return self.__dis_context__(ctx, target)
+        # Update the custom word sense inventory
+        self.inventory[word][sense_id] = prob
+

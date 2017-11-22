@@ -12,8 +12,8 @@ n_neighbours = 50
 def run(test_file, sense, context, output, wsd_method='sim', filter_ctx=2, lowercase=False, ignore_case=False):
     
     print("Loading models...")
-    vs = SenseGram.load_word2vec_format(sense, binary=True)
-    vc = word2vec.Word2Vec.load_word2vec_format(context, binary=True)
+    vs = SenseGram.load_word2vec_format(sense, binary=False)
+    vc = word2vec.Word2Vec.load_word2vec_format(context, binary=False)
     wsd_model = WSD(vs, vc, method=wsd_method, filter_ctx=filter_ctx, ignore_case=ignore_case)
 
     print("Loading test set...")

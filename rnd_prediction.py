@@ -33,7 +33,7 @@ def main():
     
     #mapping = mfs_mapping(args.inventory)
     print("Loading sense model...")
-    vs = sensegram.SenseGram.load_word2vec_format(args.senses, binary=True)
+    vs = sensegram.SenseGram.load_word2vec_format(args.senses, binary=False)
     
     run(args.test_file, vs, args.output) 
     
