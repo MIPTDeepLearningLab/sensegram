@@ -44,19 +44,12 @@ To download the pre-trained models execute the following command:
 make download
 ```
 
-To test with word sense embeddings you can use a pretrained model (sense vectors and sense probabilities). These sense vectors were induced from English Wikipedia using word2vec similarities between words in ego-networks. Probabilities are stored in a separate file and are not strictly necessary (if absent, the model will assign equal probabilities for every sense). To download the model call:
-
-```
-wget http://panchenko.me/data/joint/sensegram/wiki.senses.w2v 	// sense vectors
-wget http://panchenko.me/data/joint/sensegram/wiki.senses.w2v.probs	// sense probabilities
-```
-
-To load sense vectors:
+To test with word sense embeddings you can use a pretrained model (sense vectors and sense probabilities). These sense vectors were induced from English Wikipedia using word2vec similarities between words in ego-networks. Probabilities are stored in a separate file and are not strictly necessary (if absent, the model will assign equal probabilities for every sense). To load sense vectors:
 
 ```
 $ python
 >>> import sensegram
->>> sv = sensegram.SenseGram.load_word2vec_format(path_to_model/wiki.senses.w2v, binary=True)
+>>> sv = sensegram.SenseGram.load_word2vec_format(wiki.senses.w2v, binary=True)
 ```
 Probabilities of senses will be loaded automatically if placed in the same folder as sense vectors and named according to the same scheme as our pretrained files.
 
@@ -86,12 +79,7 @@ To understand which word sense is represented with a sense vector use `most_simi
 For example, "table#1" represents the sense related to furniture.
 
 To use our word sense disambiguation mechanism you also need word vectors or context vectors, depending on the dismabiguation strategy. Those word and context vectors should be trained on the same corpus as sense vectors. 
-You can download word and context vectors pretrained on English Wikipedia here:
-
-```
-wget http://panchenko.me/data/joint/sensegram/wiki.words	// word vectors
-wget http://panchenko.me/data/joint/sensegram/wiki.contexts	// context vectors
-```
+You can download word and context vectors pretrained on English Wikipedia here:  word vector ```wiki.words``` and context vectors ```wiki.contexts```.
 
 Our WSD mechanism supports two disambiguation strategies: one based on word similarities (`sim`) and another based on word probabilities (`prob`). The first one requires word vectors to represent context words and the second one requires context vectors for the same purpose. In following we provide a disambiguation example using similarity strategy.
 
@@ -99,7 +87,7 @@ First, load word vectors using gensim library:
 
 ```
 from gensim.models import word2vec
-wv = word2vec.Word2Vec.load_word2vec_format(path_to_model/wiki.words, binary=True)
+wv = word2vec.Word2Vec.load_word2vec_format(wiki.words, binary=True)
 ```
 
 Then initialise the WSD object with sense and word vectors:
@@ -122,70 +110,25 @@ We provide several pretrained sense models accompanied by word and context vecto
 
 #### English Wikipedia
 
-Word and context vectors:
+The vectors are of size 300, trained with CBOW model using 3-words context window, 3 iterations and minimum word frequency of 5.
 
-```
-wget http://panchenko.me/data/joint/sensegram/wiki.words
-wget http://panchenko.me/data/joint/sensegram/wiki.contexts
-```
-Those vectors are of size 300, trained with CBOW model using 3-words context window, 3 iterations and minimum word frequency of 5.
-
-Senses and probabilities induced using word2vec similarities between words:
-
-```
-wget http://panchenko.me/data/joint/sensegram/wiki.senses.w2v
-wget http://panchenko.me/data/joint/sensegram/wiki.senses.w2v.probs
-```
-
-Senses and probabilities induced using JoBimText similarities between words:
-
-```
-wget http://panchenko.me/data/joint/sensegram/wiki.senses.jbt
-wget http://panchenko.me/data/joint/sensegram/wiki.senses.jbt.probs
-```
-
-Senses and probabilities based on TWSI sense inventory:
-
-```
-wget http://panchenko.me/data/joint/sensegram/wiki.senses.twsi
-wget http://panchenko.me/data/joint/sensegram/wiki.senses.twsi.probs
-```
+- Word and context vectors: ```wiki.words, wiki.contexts```
+- Senses and probabilities induced using word2vec similarities between words: ```wiki.senses.w2v, wiki.senses.w2v.probs```
+- Senses and probabilities induced using JoBimText similarities between words: ```wiki.senses.jbt, wiki.senses.jbt.probs```
+- Senses and probabilities based on TWSI sense inventory: ```wiki.senses.twsi, wiki.senses.twsi.probs```
 
 #### ukWaC
 
-Word and context vectors:
+The vectors are of size 100, trained with CBOW model using 3-words context window, 3 iterations and minimum word frequency of 5.
 
-```
-wget http://panchenko.me/data/joint/sensegram/ukwac.words
-wget http://panchenko.me/data/joint/sensegram/ukwac.contexts
-```
-Those vectors are of size 100, trained with CBOW model using 3-words context window, 3 iterations and minimum word frequency of 5.
-
-Senses and probabilities induced using word2vec similarities between words:
-
-```
-wget http://panchenko.me/data/joint/sensegram/ukwac.senses.w2v
-wget http://panchenko.me/data/joint/sensegram/ukwac.senses.w2v.probs
-```
-
-Senses and probabilities induced using JoBimText similarities between words:
-
-```
-wget http://panchenko.me/data/joint/sensegram/ukwac.senses.jbt
-wget http://panchenko.me/data/joint/sensegram/ukwac.senses.jbt.probs
-```
-
-Senses and probabilities based on TWSI sense inventory:
-
-```
-wget http://panchenko.me/data/joint/sensegram/ukwac.senses.twsi
-wget http://panchenko.me/data/joint/sensegram/ukwac.senses.twsi.probs
-```
+- Word and context vectors: ```ukwac.words, ukwac.contexts```
+- Senses and probabilities induced using word2vec similarities between words: ```ukwac.senses.w2v, ukwac.senses.w2v.probs```
+- Senses and probabilities induced using JoBimText similarities between words: ```ukwac.senses.jbt, ukwac.senses.jbt.probs```
+- Senses and probabilities based on TWSI sense inventory: ```ukwac.senses.twsi, ukwac.senses.twsi.probs```
 
 ## Training a new model from a text corpus
-The best way to train your own sense model is with the `train.py` script. You will have to provide a tokenized corpus as input. For tokenization you can use the [preprocessing](corpora/preprocessing.py) script (it uses Treebank tokenizer and keeps letter cases, numbers and punctuation intact).
 
-If you run `train.py` with no parameters, it will print usage information:
+The best way to train your own sense model is with the `train.py` script. You will have to provide a tokenized corpus as input. For tokenization you can use the [preprocessing](corpora/preprocessing.py) script (it uses Treebank tokenizer and keeps letter cases, numbers and punctuation intact). If you run `train.py` with no parameters, it will print usage information:
 
 ```
 [-h] [-cbow CBOW] [-size SIZE] [-window WINDOW]
@@ -221,7 +164,6 @@ For Stage 3 (clustering of ego-networks)
 For Stage 4 (pooling of word vectors)
 
 * `-pooling_method` specifies which pooling method to use: 'mean' or 'weighted_mean'. Weighted mean is consistently better.
-
 
 The training produces following output files:
 
