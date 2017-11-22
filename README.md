@@ -30,7 +30,22 @@ If you use the method please cite the following paper:
 
 ## Installation
 
-This project is implemented in Python 2.7. It makes use of the word2vec toolkit and the clustering algorithm [chinese-whispers](chinese-whispers/), both distributed with this package. It has been tested on Linux and Mac OSX. To install SenseGram run the following commands:
+### Requirements
+
+- Linux or Mac OSX (Windows should work but untested)
+- Maven (the ```mvn``` command should be on the path)
+- Python 2.7 (should be available as the ```python``` command)
+- Java 1.8+ (the ```java``` command should be on the path)
+- gcc compiler (should be on the path)
+- bash
+- make
+
+The project makes use of the word2vec toolkit and the clustering algorithm [chinese-whispers](chinese-whispers/), both distributed with this package as git sub-modules.
+
+
+### Installation 
+
+To install run the following commands:
 
 ```
 git clone --recursive https://github.com/tudarmstadt-lt/sensegram.git

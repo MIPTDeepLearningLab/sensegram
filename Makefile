@@ -1,4 +1,9 @@
-stall:
+install:
+	pip install -r requirements.txt	
+	cd word2vec/src; make
+	cd chinese-whispers; mvn package shade:shade 
+	mkdir model
+	mkdir intermediate
 
 download:
 	wget http://panchenko.me/data/joint/sensegram/wiki.senses.w2v
@@ -21,9 +26,4 @@ download:
 train:
 	bash demo_train.sh
 
-install:
-	pip install -r requirements.txt	
-	mkdir model
-	mkdir intermediate
-	cd word2vec/src; make
-	cd chinese-whispers; mvn package shade:shade 
+
