@@ -1,5 +1,7 @@
 install:
 	pip install -r requirements.txt	
+	git submodule init
+	git submodule update
 	cd word2vec/src; make
 	cd chinese-whispers; mvn package shade:shade 
 	mkdir model

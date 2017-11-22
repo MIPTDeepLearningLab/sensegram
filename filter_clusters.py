@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
+
 """
 Filter clusters produced by chinese-whispers. Delete clusters that are too small.
 This program was adapted from postprocess.py script distributed with chinese-whispers implementation.

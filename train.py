@@ -76,7 +76,8 @@ def stage3_graph_based_word_sense_induction(args):
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
     for line in iter(process.stdout.readline, ''):
         sys.stdout.write(line)
-    
+    process.close()
+
     print "\nStart filtering of clusters."
     
     filter_clusters.run(clusters_fpath, clusters_minsize_fpath, clusters_removed_fpath, unicode(args.min_size))
@@ -104,8 +105,8 @@ def main():
     args = parser.parse_args()
     
     init(args)
-    stage1_learn_word_embeddings(args)
-    stage2_compute_graph_of_related_words(args)
+    #stage1_learn_word_embeddings(args)
+    #stage2_compute_graph_of_related_words(args)
     stage3_graph_based_word_sense_induction(args)
     stage4_building_sense_embeddings(args)
     
