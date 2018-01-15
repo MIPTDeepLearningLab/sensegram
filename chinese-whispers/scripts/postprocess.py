@@ -21,8 +21,8 @@ CHUNK_LINES = 500000
 def add_header(input_fpath, header):
     for line in fileinput.input(files=[input_fpath], inplace=True):
         if fileinput.isfirstline():
-            print header
-        print line,
+            print(header)
+        print(line, end=' ')
 
 
 def try_remove(fpath):
@@ -35,10 +35,10 @@ def exists(dir_path):
 
 
 def postprocess(ddt_fpath, output_fpath, filtered_fpath, min_size):
-    print "Input DDT:", ddt_fpath
-    print "Output DDT:", output_fpath
-    print "Filtered out DDT clusters:", filtered_fpath
-    print "Min size:", min_size
+    print("Input DDT:", ddt_fpath)
+    print("Output DDT:", output_fpath)
+    print("Filtered out DDT clusters:", filtered_fpath)
+    print("Min size:", min_size)
 
     min_size = int(min_size)
     ddt_tmp_fpath = ddt_fpath + ".tmp"
@@ -47,7 +47,7 @@ def postprocess(ddt_fpath, output_fpath, filtered_fpath, min_size):
     
     with codecs.open(output_fpath, "w", encoding="utf-8") as output, codecs.open(filtered_fpath, "w", encoding="utf-8") as filtered:
         reader = read_csv(ddt_tmp_fpath, encoding="utf-8", delimiter="\t", error_bad_lines=False,
-            iterator=True, chunksize=CHUNK_LINES, doublequote=False, quotechar=u"\u0000")
+            iterator=True, chunksize=CHUNK_LINES, doublequote=False, quotechar="\u0000")
         num = 0
         selected_num = 0
         senses_num = defaultdict(int)
@@ -70,9 +70,9 @@ def postprocess(ddt_fpath, output_fpath, filtered_fpath, min_size):
                 selected_num += 1
                 senses_num[row.word] += 1
 
-        print "# output clusters: %d of %d (%.2f %%)" % (selected_num, num, float(selected_num)/num*100.)
-        values = senses_num.values()
-        print "average number of senses: %.2f +- %.3f, median: %.3f" % (mean(values), std(values), median(values))
+        print("# output clusters: %d of %d (%.2f %%)" % (selected_num, num, float(selected_num)/num*100.))
+        values = list(senses_num.values())
+        print("average number of senses: %.2f +- %.3f, median: %.3f" % (mean(values), std(values), median(values)))
     try_remove(ddt_tmp_fpath)
 
 

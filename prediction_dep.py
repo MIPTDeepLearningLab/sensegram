@@ -22,13 +22,13 @@ def run(test_file, sense, context, sense_dep, context_dep, output, wsd_method='s
     print("Loading test set...")
     reader = read_csv(test_file, encoding="utf-8", delimiter="\t", dtype={'predict_related': object, 'gold_sense_ids':object, 'predict_sense_ids':object, 'deps':object})
     rows_count = reader.shape[0]
-    print(unicode(rows_count) + " test instances")
+    print((str(rows_count) + " test instances"))
     pb = pbar.Pbar(rows_count, 100)
     
 
     uncovered_words = [] # target words for which sense model has zero senses
 
-    print("Start prediction over " + test_file)
+    print(("Start prediction over " + test_file))
     pb.start()
     reader = reader.fillna('')
     for i, row in reader.iterrows():
@@ -56,7 +56,7 @@ def run(test_file, sense, context, sense_dep, context_dep, output, wsd_method='s
     pb.finish()
     
     reader.to_csv(sep='\t', path_or_buf=output, encoding="utf-8", index=False, quoting=QUOTE_NONE)
-    print("Saved predictions to " + output)
+    print(("Saved predictions to " + output))
     
 
 def main():

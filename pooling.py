@@ -19,8 +19,8 @@ import pbar
 CHUNK_LINES = 500000
 SPLIT_MWE = True
 debug = False
-sen_delimiter = u"#" # python#0, python#1, etc
-inventory_header = u"word\tsense_id\trel_terms\n"
+sen_delimiter = "#" # python#0, python#1, etc
+inventory_header = "word\tsense_id\trel_terms\n"
 
 def file_len(fname):
     with open(fname) as f:
@@ -66,7 +66,7 @@ def initialize(clusters_file, has_header, vector_size):
     senvec = sensegram.SenseGram(size=vector_size, sorted_vocab=0)
     senvec.syn0 = np.zeros((nclusters, vector_size), dtype=np.float32)
     if debug: 
-        print("Matrix shape: (%i, %i)" % (nclusters, vector_size))
+        print(("Matrix shape: (%i, %i)" % (nclusters, vector_size)))
     return senvec
 
 def read_clusetrs_file(clusters, has_header):
@@ -77,11 +77,11 @@ def read_clusetrs_file(clusters, has_header):
     if has_header:
         reader = read_csv(clusters, encoding="utf-8", delimiter="\t", error_bad_lines=False, iterator=True,
                           chunksize=CHUNK_LINES, na_values=[""], keep_default_na=False, 
-                          doublequote=False, quotechar=u"\u0000", index_col=False)
+                          doublequote=False, quotechar="\u0000", index_col=False)
     else:
         reader = read_csv(clusters, encoding="utf-8", delimiter="\t", error_bad_lines=False, iterator=True,
                           chunksize=CHUNK_LINES, na_values=[""], keep_default_na=False, 
-                          doublequote=False, quotechar=u"\u0000",
+                          doublequote=False, quotechar="\u0000",
                           header=None, names=["word","cid","cluster"])
     return reader
 
@@ -103,7 +103,7 @@ def parse_cluster(row_cluster, wordvec):
                     if w in wordvec.vocab: 
                         cluster.append((w, sim))
         except:
-            print "Warning: wrong cluster word", item
+            print("Warning: wrong cluster word", item)
     return cluster
     
 def run(clusters, model, output, method='weighted', lowercase=False, inventory=None, has_header=True):
@@ -117,7 +117,7 @@ def run(clusters, model, output, method='weighted', lowercase=False, inventory=N
     print("Initializing sense model...")
     senvec = initialize(clusters, has_header, wordvec.syn0.shape[1])
 
-    print("Pooling cluster vectors (%s method)..." % method)
+    print(("Pooling cluster vectors (%s method)..." % method))
     reader = read_clusetrs_file(clusters, has_header)
     
     
@@ -129,7 +129,7 @@ def run(clusters, model, output, method='weighted', lowercase=False, inventory=N
         i = 0
         for chunk in reader:
             if debug: 
-                print("Column types: %s" % chunk.dtypes)
+                print(("Column types: %s" % chunk.dtypes))
             for j, row in chunk.iterrows():
                 row_word = row.word
                 row_cluster = row.cluster
@@ -138,7 +138,7 @@ def run(clusters, model, output, method='weighted', lowercase=False, inventory=N
                     row_cluster = row_cluster.lower()
                     
                 # enumerate word senses from 0
-                sen_word = unicode(row_word) + sen_delimiter + unicode(sen_count[row_word])
+                sen_word = str(row_word) + sen_delimiter + str(sen_count[row_word])
                 
                 # process new sense
                 sen_cluster = parse_cluster(row_cluster, wordvec)
@@ -157,13 +157,13 @@ def run(clusters, model, output, method='weighted', lowercase=False, inventory=N
                     if inventory:
                         # join back cluster words (only those that were actually used for sense vector)
                         cluster = ",".join([word + ":" + sim for word, sim in sen_cluster])
-                        inv_output.write(u"%s\t%s\t%s\n" % (sen_word.split(sen_delimiter)[0], 
+                        inv_output.write("%s\t%s\t%s\n" % (sen_word.split(sen_delimiter)[0], 
                                                             sen_word.split(sen_delimiter)[1], cluster))
                 else: 
                     small_clusters += 1
                     if debug:
-                        print row_word, "\t", row.cid
-                        print sen_cluster
+                        print(row_word, "\t", row.cid)
+                        print(sen_cluster)
                 pb.update(i)
                 i += 1 
         senvec.__normalize_probs__(cluster_sum)
@@ -171,9 +171,9 @@ def run(clusters, model, output, method='weighted', lowercase=False, inventory=N
 
     ##### Validation #####
     if senvec.syn0.shape[0] != len(senvec.vocab):
-        print("Shrinking matrix size from %i to %i" % (senvec.syn0.shape[0], len(senvec.vocab)))
+        print(("Shrinking matrix size from %i to %i" % (senvec.syn0.shape[0], len(senvec.vocab))))
         senvec.syn0 = np.ascontiguousarray(senvec.syn0[:len(senvec.vocab)])
-    print("Sense vectors saved to: " + output)
+    print(("Sense vectors saved to: " + output))
     senvec.save_word2vec_format(fname=output, binary=True)
 
     

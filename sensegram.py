@@ -25,7 +25,7 @@ class SenseGram(word2vec.Word2Vec):
         words = set(words)
         for word in words:
             for i in range(0,200):
-                sense = word + u'#' + unicode(i)
+                sense = word + '#' + str(i)
                 if sense in self.vocab:
                     senses.append((sense, self.probs[sense]))
                 else:
@@ -37,7 +37,7 @@ class SenseGram(word2vec.Word2Vec):
         
         prob_file = fname + ".probs"
         with codecs.open(prob_file, 'w', encoding='utf-8') as out:
-            for sense, prob in self.probs.items():
+            for sense, prob in list(self.probs.items()):
                 out.write("%s %s\n" % (sense, prob))
     
     @classmethod
@@ -77,7 +77,7 @@ class SenseGram(word2vec.Word2Vec):
             raise RuntimeError("must initialize syn0 matrix before adding words")
         
     def __normalize_probs__(self, cluster_sum):
-        for sense, cluster_size in self.probs.items():
+        for sense, cluster_size in list(self.probs.items()):
             if len(sense.split("#")) == 2:
                 word, sense_id = sense.split("#")
                 if word in cluster_sum and cluster_sum[word] > 0:
@@ -96,8 +96,8 @@ class WSD(object):
         self.ignore_case = ignore_case
         self.verbose = verbose
         
-        print("Disambiguation method: " + self.ctx_method)
-        print("Filter context: f = %s" % (self.filter_ctx))
+        print(("Disambiguation method: " + self.ctx_method))
+        print(("Filter context: f = %s" % (self.filter_ctx)))
         
     def get_context(self, text, start, end):
         """ returns a list of words surrounding the target positioned at [start:end] in the text 
@@ -138,8 +138,8 @@ class WSD(object):
             
         significance = [abs(max(pd) - min(pd)) for pd in prob_dist_per_cv]
         if self.verbose:
-            print "Significance scores of context words:"
-            print significance
+            print("Significance scores of context words:")
+            print(significance)
         most_significant_cv = sorted(zip(vctx, significance), key = itemgetter(1), reverse=True)[:n]
         
         return [cv for cv, sign in most_significant_cv]
@@ -151,8 +151,8 @@ class WSD(object):
             returns None if word is not covered by the model"""
         senses = self.vs.get_senses(word, self.ignore_case)
         if self.verbose:
-            print "Senses of a target word:"
-            print senses
+            print("Senses of a target word:")
+            print(senses)
             
         if len(senses) == 0: # means we don't know any sense for this word
             return None 
@@ -176,8 +176,8 @@ class WSD(object):
             avg_context = np.mean(vctx, axis=0)
             scores = [self.__cosine_sim__(avg_context, self.vs[sense]) for sense, prob in senses]
             if self.verbose:
-                print "Sense probabilities:"
-                print scores
+                print("Sense probabilities:")
+                print(scores)
             
         else:
             raise ValueError("Unknown context handling method '%s'" % self.ctx_method) 
@@ -196,6 +196,6 @@ class WSD(object):
         
         ctx = self.get_context(text, target_start, target_end)
         if self.verbose:
-            print "Extracted context words:"
-            print ctx
+            print("Extracted context words:")
+            print(ctx)
         return self.__dis_context__(ctx, target)

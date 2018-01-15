@@ -1,3 +1,14 @@
+# custom
+
+*.contexts
+*.words
+distance
+word2vec
+word-analogy
+word2phrase
+compute-accuracy
+word_vectors
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

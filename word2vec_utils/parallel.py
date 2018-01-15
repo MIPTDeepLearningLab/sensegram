@@ -3,7 +3,7 @@ __author__ = 'test'
 import sys
 import time
 import threading
-from itertools import izip, count
+from itertools import count
 
 def foreach(f,l,threads=3,return_=False):
     """
@@ -16,7 +16,7 @@ def foreach(f,l,threads=3,return_=False):
         if return_:
             n = 0
             d = {}
-            i = izip(count(),l.__iter__())
+            i = zip(count(),l.__iter__())
         else:
             i = l.__iter__()
 
@@ -28,7 +28,7 @@ def foreach(f,l,threads=3,return_=False):
                     try:
                         if exceptions:
                             return
-                        v = i.next()
+                        v = next(i)
                     finally:
                         iteratorlock.release()
                 except StopIteration:
@@ -47,16 +47,16 @@ def foreach(f,l,threads=3,return_=False):
                     finally:
                         iteratorlock.release()
 
-        threadlist = [threading.Thread(target=runall) for j in xrange(threads)]
+        threadlist = [threading.Thread(target=runall) for j in range(threads)]
         for t in threadlist:
             t.start()
         for t in threadlist:
             t.join()
         if exceptions:
             a, b, c = exceptions[0]
-            raise a, b, c
+            raise a(b).with_traceback(c)
         if return_:
-            r = d.items()
+            r = list(d.items())
             r.sort()
             return [v for (n,v) in r]
     else:

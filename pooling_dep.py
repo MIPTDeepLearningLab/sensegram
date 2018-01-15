@@ -42,7 +42,7 @@ def initialize(clusters_file, has_header, vector_size):
     senvec = sensegram.SenseGram(size=vector_size, sorted_vocab=0)
     senvec.syn0 = np.zeros((nclusters, vector_size), dtype=np.float32)
     if debug: 
-        print("Matrix shape: (%i, %i)" % (nclusters, vector_size))
+        print(("Matrix shape: (%i, %i)" % (nclusters, vector_size)))
     return senvec
 
 def read_clusetrs_file(clusters, has_header):
@@ -53,11 +53,11 @@ def read_clusetrs_file(clusters, has_header):
     if has_header:
         reader = read_csv(clusters, encoding="utf-8", delimiter="\t", error_bad_lines=False, iterator=True,
                           chunksize=CHUNK_LINES, na_values=[""], keep_default_na=False, 
-                          doublequote=False, quotechar=u"\u0000", index_col=False)
+                          doublequote=False, quotechar="\u0000", index_col=False)
     else:
         reader = read_csv(clusters, encoding="utf-8", delimiter="\t", error_bad_lines=False, iterator=True,
                           chunksize=CHUNK_LINES, na_values=[""], keep_default_na=False, 
-                          doublequote=False, quotechar=u"\u0000",
+                          doublequote=False, quotechar="\u0000",
                           header=None, names=["word","cluster"])
     return reader
 
@@ -72,7 +72,7 @@ def parse_cluster(row_cluster, contextvec):
             if word in contextvec.vocab:
                 cluster.append((word, sim))
         except:
-            print "Warning: wrong cluster word", item
+            print("Warning: wrong cluster word", item)
     return cluster
     
 def run(clusters, model, n, output, method='weighted', has_header=True):
@@ -82,7 +82,7 @@ def run(clusters, model, n, output, method='weighted', has_header=True):
     print("Initializing new word model...")
     wordvec = initialize(clusters, has_header, contextvec.syn0.shape[1])
 
-    print("Pooling cluster vectors (%s method)..." % method)
+    print(("Pooling cluster vectors (%s method)..." % method))
     reader = read_clusetrs_file(clusters, has_header)
     
     
@@ -91,7 +91,7 @@ def run(clusters, model, n, output, method='weighted', has_header=True):
     i = 0
     for chunk in reader:
         if debug: 
-            print("Column types: %s" % chunk.dtypes)
+            print(("Column types: %s" % chunk.dtypes))
         for j, row in chunk.iterrows():
             row_word = row.word
             row_cluster = row.cluster
@@ -112,9 +112,9 @@ def run(clusters, model, n, output, method='weighted', has_header=True):
 
     ##### Validation #####
     if wordvec.syn0.shape[0] != len(wordvec.vocab):
-        print("Shrinking matrix size from %i to %i" % (wordvec.syn0.shape[0], len(wordvec.vocab)))
+        print(("Shrinking matrix size from %i to %i" % (wordvec.syn0.shape[0], len(wordvec.vocab))))
         wordvec.syn0 = np.ascontiguousarray(wordvec.syn0[:len(wordvec.vocab)])
-    print("Sense vectors saved to: " + output)
+    print(("Sense vectors saved to: " + output))
     wordvec.save_word2vec_format(fname=output, binary=True)
 
 def main():

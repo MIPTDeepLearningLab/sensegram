@@ -24,7 +24,7 @@ def init(args):
     context_vectors = "model/" + corpus_name + ".contexts"
     neighbours = "intermediate/" + corpus_name + ".neighbours"
     clusters = "intermediate/" + corpus_name + ".clusters"
-    clusters_minsize = clusters + ".minsize" + unicode(args.min_size) # clusters that satisfy min_size
+    clusters_minsize = clusters + ".minsize" + str(args.min_size) # clusters that satisfy min_size
     clusters_filtered = clusters_minsize + ".filtered" # cluster that are smaller than min_size
     sense_inventory = "intermediate/" + corpus_name + ".inventory"
     sense_vectors = "model/" + corpus_name + ".senses.w2v"
@@ -32,49 +32,50 @@ def init(args):
 
 def stage1(args):
     """ Train word vectors using word2vec """
-    bash_command = ("word2vec_c/word2vec -train " + corpus + 
+    bash_command = ("word2vec_c/word2vec -train " + corpus +
                    " -output " + word_vectors + " -save-ctx " + context_vectors +   
-                   " -cbow " + unicode(args.cbow) + " -size " + unicode(args.size) + 
-                   " -window " + unicode(args.window) + " -threads " + unicode(args.threads) +
-                   " -iter " + unicode(args.iter) + " -min_count " + unicode(args.min_count) +
+                   " -cbow " + str(args.cbow) + " -size " + str(args.size) + 
+                   " -window " + str(args.window) + " -threads " + str(args.threads) +
+                   " -iter " + str(args.iter) + " -min_count " + str(args.min_count) +
                    " -binary 1 -negative 25 -hs 0 -sample 1e-4")
     
-    print "\nSTAGE 1"
-    print "Start word vectors training with following parameters:"
-    print bash_command
+    print("\nSTAGE 1")
+    print("Start word vectors training with following parameters:")
+    print(bash_command)
     
-    print "\nTraining progress won't be printed."
+    print("\nTraining progress won't be printed.")
     
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-    for line in iter(process.stdout.readline, ''):
-        sys.stdout.write(line)
+    lines = process.stdout.readlines()
+    for line in lines:
+        sys.stdout.write(line.decode('utf-8'))
 
 def stage2(args):
-    print "\nSTAGE 2"
-    print "Start collection of word neighbours."
+    print("\nSTAGE 2")
+    print("Start collection of word neighbours.")
     word2vec_utils.similar_top.init(word_vectors, neighbours, only_letters=args.only_letters, vocab_limit=args.vocab_limit, pairs=True, batch_size=1000, word_freqs=None)
 
 def stage3(args):
     bash_command = ("java -Xms1G -Xmx2G -cp chinese-whispers/target/chinese-whispers.jar de.tudarmstadt.lt.wsi.WSI " +
                     " -in " + neighbours + " -out " + clusters + 
-                    " -N " + unicode(args.N) + " -n " + unicode(args.n) +
+                    " -N " + str(args.N) + " -n " + str(args.n) +
                     " -clustering cw")
     
-    print "\nSTAGE 3"
-    print "\nStart clustering of word ego-networks with following parameters:"
-    print bash_command
+    print("\nSTAGE 3")
+    print("\nStart clustering of word ego-networks with following parameters:")
+    print(bash_command)
     
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
     for line in iter(process.stdout.readline, ''):
-        sys.stdout.write(line)
+        sys.stdout.write(line.decode('utf-8'))
     
-    print "\nStart filtering of clusters."
+    print("\nStart filtering of clusters.")
     
-    filter_clusters.run(clusters, clusters_minsize, clusters_filtered, unicode(args.min_size))
+    filter_clusters.run(clusters, clusters_minsize, clusters_filtered, str(args.min_size))
     
 def stage4(args):
-    print "\nSTAGE 4"
-    print "\nStart pooling of word vectors."
+    print("\nSTAGE 4")
+    print("\nStart pooling of word vectors.")
     
     pooling.run(clusters_minsize, word_vectors, sense_vectors, method=args.pooling_method, inventory=sense_inventory, lowercase=False, has_header=True)
 

@@ -13,13 +13,13 @@ def main():
     parser.add_argument('-min_size', help='Minimum cluster size. Default -- 5.', default="5")
     args = parser.parse_args()
 
-    print "Input DDT directory (pattern):", args.ddt_dir
-    print "Min size:", args.min_size
+    print("Input DDT directory (pattern):", args.ddt_dir)
+    print("Min size:", args.min_size)
 
     #postprocess(args.ddt, output_fpath, filtered_fpath, int(args.min_size))
     for cluster_fpath in glob.glob(args.ddt_dir):
         if splitext(cluster_fpath)[-1] == ".csv":
-            print "\n>>>", cluster_fpath
+            print("\n>>>", cluster_fpath)
             postprocess(
                     cluster_fpath,
                     cluster_fpath+"-minsize" + args.min_size + ".csv",

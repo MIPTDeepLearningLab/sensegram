@@ -46,12 +46,12 @@ def load_word2vec_format(fname, fvocab=None, binary=False, norm_only=True, encod
     logger.info("loading projection weights from %s" % (fname))
     with utils.smart_open(fname) as fin:
         header = utils.to_unicode(fin.readline(), encoding=encoding)
-        vocab_size, vector_size = map(int, header.split())  # throws for invalid file format
+        vocab_size, vector_size = list(map(int, header.split()))  # throws for invalid file format
         result = Word2Vec(size=vector_size)
         result.syn0 = zeros((vocab_size, vector_size), dtype=REAL)
         if binary:
             binary_len = dtype(REAL).itemsize * vector_size
-            for line_no in xrange(vocab_size):
+            for line_no in range(vocab_size):
                 # mixed text and binary: read text first, then binary
                 word = []
                 while True:
@@ -63,7 +63,7 @@ def load_word2vec_format(fname, fvocab=None, binary=False, norm_only=True, encod
                         word.append(ch)
                 try:
                     word = utils.to_unicode(b''.join(word), encoding=encoding)
-                except UnicodeDecodeError, e:
+                except UnicodeDecodeError as e:
                     logger.warning("Couldn't convert whole word to unicode: trying to convert first %d bytes only ..." % e.start)
                     word = utils.to_unicode(b''.join(word[:e.start]), encoding=encoding)
                     logger.warning("... first %d bytes converted to '%s'" % (e.start, word))
