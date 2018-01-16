@@ -33,7 +33,7 @@ class SenseGram(word2vec.Word2Vec):
         return senses
     
     def save_word2vec_format(self, fname, fvocab=None, binary=False):
-        super(SenseGram, self).save_word2vec_format(fname, fvocab, binary)
+        super(type(self.wv), self.wv).save_word2vec_format(fname, fvocab, binary)
         
         prob_file = fname + ".probs"
         with codecs.open(prob_file, 'w', encoding='utf-8') as out:

@@ -46,8 +46,7 @@ def stage1(args):
     print("\nTraining progress won't be printed.")
     
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-    lines = process.stdout.readlines()
-    for line in lines:
+    for line in process.stdout:
         sys.stdout.write(line.decode('utf-8'))
 
 def stage2(args):
@@ -66,7 +65,7 @@ def stage3(args):
     print(bash_command)
     
     process = subprocess.Popen(bash_command.split(), stdout=subprocess.PIPE)
-    for line in iter(process.stdout.readline, ''):
+    for line in process.stdout:
         sys.stdout.write(line.decode('utf-8'))
     
     print("\nStart filtering of clusters.")
