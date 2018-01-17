@@ -1,8 +1,8 @@
-## Fork update ~~start~~
+## fork_update {
 
 Project was successfully transfered to py3 and tested with `python 3.6.3`.
 
-**Unfortunately this version of the project is depricated, thus it is worthwhile to check the original repository for the maintenance of the third python.**
+**Unfortunately this version of the project is deprecated, thus it is worthwhile to check the original repository for the maintenance of the third python.**
 
 
 #### Installation:
@@ -21,7 +21,7 @@ pip install -r requirements.txt
 ./init.sh
 ```
 
-## Fork update ~~end~~
+### }
 
 ---
 
