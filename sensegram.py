@@ -4,13 +4,15 @@ import codecs
 import math
 import numpy as np
 from gensim.models import word2vec
+from gensim.models import KeyedVectors
+
 
 default_count = 100 # arbitrary, should be larger than min_count of vec object, which is 5 by default
 
 class SenseGram(word2vec.Word2Vec):
     def __init__(self, *args, **kwargs):
         super(SenseGram, self).__init__(*args, **kwargs)
-        self.probs = {} # mapping from a sense (String) to its probability
+        self.wv.probs = {} # mapping from a sense (String) to its probability
     
     def get_senses(self, word, ignore_case=False):
         """ returns a list of all available senses for a given word.
@@ -26,28 +28,28 @@ class SenseGram(word2vec.Word2Vec):
         for word in words:
             for i in range(0,200):
                 sense = word + '#' + str(i)
-                if sense in self.vocab:
-                    senses.append((sense, self.probs[sense]))
+                if sense in self.wv.vocab:
+                    senses.append((sense, self.wv.probs[sense]))
                 else:
                     break
         return senses
     
     def save_word2vec_format(self, fname, fvocab=None, binary=False):
-        super(type(self.wv), self.wv).save_word2vec_format(fname, fvocab, binary)
+        self.wv.save_word2vec_format(fname, fvocab, binary)
         
         prob_file = fname + ".probs"
         with codecs.open(prob_file, 'w', encoding='utf-8') as out:
-            for sense, prob in list(self.probs.items()):
+            for sense, prob in list(self.wv.probs.items()):
                 out.write("%s %s\n" % (sense, prob))
     
     @classmethod
     def load_word2vec_format(cls, fname, fvocab=None, binary=False, norm_only=True, encoding='utf8', unicode_errors='strict'):
-        mod = word2vec.Word2Vec.load_word2vec_format(fname, fvocab, binary, encoding, unicode_errors)
+        mod = KeyedVectors.load_word2vec_format(fname, fvocab, binary, encoding, unicode_errors)
         
         result = cls(size=mod.vector_size)
-        result.syn0 = mod.syn0
-        result.vocab = mod.vocab
-        result.index2word = mod.index2word
+        result.wv.syn0 = mod.syn0
+        result.wv.vocab = mod.vocab
+        result.wv.index2word = mod.index2word
         
         prob_file = fname + ".probs"
         if os.path.isfile(prob_file):
@@ -55,35 +57,35 @@ class SenseGram(word2vec.Word2Vec):
                 for line in inp:
                     try:
                         sense, prob = line.split()
-                        result.probs[sense] = float(prob)
+                        result.wv.probs[sense] = float(prob)
                     except:
-                        result.probs[sense] = 1
+                        result.wv.probs[sense] = 1
         else:
-            for w in result.index2word:
-                result.probs[w] = 1.0
+            for w in result.wv.index2word:
+                result.wv.probs[w] = 1.0
                     
         return result
         
     def add_word(self, word, vector):
         """add new word to the model"""
-        if hasattr(self, 'syn0'):
-            word_id = len(self.vocab)
-            self.vocab[word] = word2vec.Vocab(index=word_id, count=default_count)
-            self.syn0[word_id] = vector
-            self.index2word.append(word)
+        if hasattr(self.wv, 'syn0'):
+            word_id = len(self.wv.vocab)
+            self.wv.vocab[word] = word2vec.Vocab(index=word_id, count=default_count)
+            self.wv.syn0[word_id] = vector
+            self.wv.index2word.append(word)
 
-            assert word == self.index2word[self.vocab[word].index]
+            assert word == self.wv.index2word[self.wv.vocab[word].index]
         else: 
             raise RuntimeError("must initialize syn0 matrix before adding words")
         
     def __normalize_probs__(self, cluster_sum):
-        for sense, cluster_size in list(self.probs.items()):
+        for sense, cluster_size in list(self.wv.probs.items()):
             if len(sense.split("#")) == 2:
                 word, sense_id = sense.split("#")
                 if word in cluster_sum and cluster_sum[word] > 0:
-                    self.probs[sense] = float(cluster_size)/cluster_sum[word]
+                    self.wv.probs[sense] = float(cluster_size)/cluster_sum[word]
                 else:
-                    self.probs[sense] = 1
+                    self.wv.probs[sense] = 1
 
 class WSD(object):
     

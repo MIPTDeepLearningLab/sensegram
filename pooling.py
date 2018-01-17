@@ -72,7 +72,7 @@ def initialize(clusters_file, has_header, vector_size):
     if has_header:
         nclusters = nclusters - 1
     senvec = sensegram.SenseGram(size=vector_size, sorted_vocab=0)
-    senvec.syn0 = np.zeros((nclusters, vector_size), dtype=np.float32)
+    senvec.wv.syn0 = np.zeros((nclusters, vector_size), dtype=np.float32)
     if debug:
         print(("Matrix shape: (%i, %i)" % (nclusters, vector_size)))
     return senvec
@@ -130,7 +130,7 @@ def run(clusters, model, output, method='weighted', lowercase=False, inventory=N
     print(("Pooling cluster vectors (%s method)..." % method))
     reader = read_clusetrs_file(clusters, has_header)
 
-    pb = pbar.Pbar(senvec.syn0.shape[0], 100)
+    pb = pbar.Pbar(senvec.wv.syn0.shape[0], 100)
     pb.start()
 
     with write_inventory(inventory) as inv_output:
@@ -156,9 +156,9 @@ def run(clusters, model, output, method='weighted', lowercase=False, inventory=N
                     sims = np.array([float(sim) for word, sim in sen_cluster])
                     sen_vector = pool_vectors(vectors, sims, method)
 
-                    if sen_word not in senvec.vocab:
+                    if sen_word not in senvec.wv.vocab:
                         senvec.add_word(sen_word, sen_vector)
-                        senvec.probs[sen_word] = len(sen_cluster)  # number of cluster words per sense
+                        senvec.wv.probs[sen_word] = len(sen_cluster)  # number of cluster words per sense
                         sen_count[row_word] += 1  # number of senses per word
                         cluster_sum[row_word] += len(sen_cluster)  # number of cluster words per word
 
@@ -179,13 +179,11 @@ def run(clusters, model, output, method='weighted', lowercase=False, inventory=N
         pb.finish()
 
     ##### Validation #####
-    if senvec.syn0.shape[0] != len(senvec.wv.vocab):
-        print(("Shrinking matrix size from %i to %i" % (senvec.syn0.shape[0], len(senvec.wv.vocab))))
-        senvec.syn0 = np.ascontiguousarray(senvec.syn0[:len(senvec.wv.vocab)])
+    if senvec.wv.syn0.shape[0] != len(senvec.wv.vocab):
+        print(("Shrinking matrix size from %i to %i" % (senvec.wv.syn0.shape[0], len(senvec.wv.vocab))))
+        senvec.wv.syn0 = np.ascontiguousarray(senvec.wv.syn0[:len(senvec.wv.vocab)])
     print(("Sense vectors saved to: " + output))
 
-    # TODO: this is really ugly code
-    senvec.wv.syn0 = senvec.syn0
     senvec.save_word2vec_format(fname=output, binary=True)
 
 
