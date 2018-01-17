@@ -1,3 +1,30 @@
+## Fork update ~~start~~
+
+Project was successfully transfered to py3 and tested with `python 3.6.3`.
+
+**Unfortunately this version of the project is depricated, thus it is worthwhile to check the original repository for the maintenance of the third python.**
+
+
+#### Installation:
+
+1. You should install [`maven`](https://maven.apache.org/install.html) because it is required for `chinese-whispers` implemented in java.
+
+2. All the following installation process is the same as in original package.
+
+```
+git clone https://github.com/fogside/sensegram.git
+
+cd sensegram/
+
+pip install -r requirements.txt
+
+./init.sh
+```
+
+## Fork update ~~end~~
+
+---
+
 # SenseGram
 
 This repository contains implementation of a method that takes as an input a word embeddings, such as word2vec and splits different senses of the input words. For instance, the vector for the word "table" will be split into "table (data)" and "table (furniture)" as shown below.
