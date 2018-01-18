@@ -184,7 +184,7 @@ def run(clusters, model, output, method='weighted', lowercase=False, inventory=N
         senvec.wv.syn0 = np.ascontiguousarray(senvec.wv.syn0[:len(senvec.wv.vocab)])
     print(("Sense vectors saved to: " + output))
 
-    senvec.save_word2vec_format(fname=output, binary=True)
+    senvec.save_word2vec_format(fname=output, binary=False)
 
 
 def main():
